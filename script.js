@@ -1,5 +1,7 @@
 var tiles = [];
 var selected;
+var rows;
+var cols;
 
 function DetermineImage(up, down, left, right) {
 	if (up) {
@@ -62,33 +64,44 @@ class Tile {
 }
 
 function Select(tile) {
-	if (selected != null) {
+	if (selected == tile) {
 		selected.image.style.border = '1px solid white';
-		if (tile.posX == selected.posX + 1 && tile.posY == selected.posY) {
-			selected.ChangeRight();
-			tile.ChangeLeft();
-		} else if (tile.posX == selected.posX - 1 && tile.posY == selected.posY) {
-			selected.ChangeLeft();
-			tile.ChangeRight();
-		} else if (tile.posY == selected.posY + 1 && tile.posX == selected.posX) {
-			selected.ChangeDown();
-			tile.ChangeUp();
-		} else if (tile.posY == selected.posY - 1 && tile.posX == selected.posX) {
-			selected.ChangeUp();
-			tile.ChangeDown();
+		selected = null;
+	} else {
+		if (selected != null) {
+			selected.image.style.border = '1px solid white';
+			if (tile.posX == selected.posX + 1 && tile.posY == selected.posY) {
+				selected.ChangeRight();
+				tile.ChangeLeft();
+			} else if (tile.posX == selected.posX - 1 && tile.posY == selected.posY) {
+				selected.ChangeLeft();
+				tile.ChangeRight();
+			} else if (tile.posY == selected.posY + 1 && tile.posX == selected.posX) {
+				selected.ChangeDown();
+				tile.ChangeUp();
+			} else if (tile.posY == selected.posY - 1 && tile.posX == selected.posX) {
+				selected.ChangeUp();
+				tile.ChangeDown();
+			}
 		}
-	} 
-	selected = tile;
-	selected.image.style.border = '1px solid red';
+		selected = tile;
+		selected.image.style.border = '1px solid red';
+	}
 }
 
 function CreateGrid(width, height) {
 	tiles = [];
+	cols = width;
+	rows = height;
+	var div = document.getElementById('grid');
+	if (div.children.length != 0) {
+		div.children[0].remove();
+	}
 	var table = document.createElement('table');
-	for (var i = 0; i < height; i++) {
+	for (var i = 0; i < rows; i++) {
 		var tileRow = [];
 		var row = document.createElement('tr');
-		for (var j = 0; j < width; j++) {
+		for (var j = 0; j < cols; j++) {
 			var cell = document.createElement('td');
 			var image = document.createElement('img');
 			image.src = 'images/empty.png';
@@ -103,5 +116,5 @@ function CreateGrid(width, height) {
 		tiles.push(tileRow);
 		table.appendChild(row);
 	}
-	document.getElementById('grid').appendChild(table);
+	div.appendChild(table);
 }
