@@ -134,9 +134,9 @@ function Select(tile) {
 
 function CreateGrid(width, height) {
 	var emptyGridArray = []
-	for (var i = 0; i < height; i++) {
+	for (var i = 0; i < Math.max(Math.min(height, 20), 1); i++) {
 		var emptyCol = [];
-		for (var j = 0; j < width; j++) {
+		for (var j = 0; j < Math.max(Math.min(width, 20), 1); j++) {
 			emptyCol.push(Type.none);
 		}
 		emptyGridArray.push(emptyCol);
@@ -231,6 +231,10 @@ function CheckSingleLoop(grid) {
 		}
 		i += 1;
 	}
+	//make sure there is at least 1 line on the grid
+	if (startX == -1) {
+		return false;
+	}
 	//choose a direction to start moving
 	var nextX = startX;
 	var nextY = startY;
@@ -297,7 +301,7 @@ function CheckCompleteOpen(grid, y, x) {
 }
 
 function CheckCompleteClosed(grid, y, x) {
-	if ((grid[y][x].up && grid[y][x].down) || (grid[y][x].left && grid[y][x].right)) {
+	if ((grid[y][x].up && grid[y][x].down) || (grid[y][x].left && grid[y][x].right) || grid[y][x].connections == 0) {
 		return false;
 	}
 	if (grid[y][x].up) {
