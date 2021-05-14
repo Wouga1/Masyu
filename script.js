@@ -3,6 +3,23 @@ var selected;
 var rows;
 var cols;
 
+class Grid {
+	constructor(tiles) {
+		this.rows = tiles.length;
+		this.cols = tiles[0].length;
+		this.tiles = tiles;
+	}
+}
+const p1 = new Grid([[2, 1, 0, 1, 0, 0], [1, 0, 0, 0, 0, 0], [2, 1, 0, 0, 0, 1], [2, 1, 0, 2, 1, 2], [1, 0, 0, 1, 0, 0], [2, 1, 1, 2, 0, 0]]);
+const p2 = new Grid([[0, 0, 0, 1, 0, 1, 2], [1, 0, 0, 1, 0, 0, 1], [0, 1, 0, 1, 1, 0, 0], [0, 0, 0, 0, 1, 2, 0], [0, 1, 0, 0, 0, 1, 0], [0, 1, 0, 0, 1, 2, 0], [0, 1, 0, 0, 0, 0, 2]]);
+const p3 = new Grid([[0, 0, 1, 0, 0, 0], [0, 1, 0, 0, 1, 0], [0, 1, 0, 2, 0, 0], [0, 1, 0, 0, 0, 0], [0, 0, 0, 0, 0, 1], [0, 0, 2, 0, 0, 0]]);
+const p4 = new Grid([[0, 0, 0, 0, 1, 0], [1, 0, 1, 0, 0, 0], [0, 0, 2, 2, 0, 0], [0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 1], [0, 0, 0, 1, 0, 0]]);
+const p5 = new Grid([[0, 1, 0, 2, 0, 1, 0], [0, 0, 0, 0, 0, 0, 0], [1, 0, 1, 0, 0, 0, 1], [0, 0, 2, 0, 1, 1, 0], [0, 0, 0, 0, 0, 0, 0], [0, 1, 0, 0, 0, 0, 0], [0, 1, 0, 0, 2, 0, 0]]);
+const p6 = new Grid([[0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 1, 0, 1], [0, 1, 0, 2, 0, 1, 1, 0], [0, 0, 0, 0, 0, 0, 0, 0], [1, 1, 0, 1, 0, 2, 0, 0], [0, 0, 1, 1, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 1, 0], [0, 1, 0, 0, 0, 0, 0, 0]]);
+const p7 = new Grid([[0, 0, 1, 0, 0, 0], [0, 0, 0, 0, 0, 2], [0, 1, 0, 1, 0, 0], [0, 0, 2, 0, 0, 0], [0, 1, 0, 0, 0, 1], [0, 0, 0, 1, 0, 0]]);
+
+
+// #region tiles
 const Type = {
 	none: 0,
 	open: 1,
@@ -31,7 +48,7 @@ function DetermineImage(up, down, left, right, type) {
 			image += 'right';
 		} else if (left) {
 			image += 'left';
-		} 
+		}
 	} else if (left) {
 		image += 'left';
 		if (right) {
@@ -46,16 +63,6 @@ function DetermineImage(up, down, left, right, type) {
 	return image;
 }
 
-class Grid {
-	constructor(tiles) {
-		this.rows = tiles.length;
-		this.cols = tiles[0].length;
-		this.tiles = tiles;
-	}
-}
-const p1 = new Grid([[2,1,0,1,0,0],[1,0,0,0,0,0],[2,1,0,0,0,1],[2,1,0,2,1,2],[1,0,0,1,0,0],[2,1,1,2,0,0]])
-const p2 = new Grid([[0,0,0,1,0,1,2],[1,0,0,1,0,0,1],[0,1,0,1,1,0,0],[0,0,0,0,1,2,0],[0,1,0,0,0,1,0],[0,1,0,0,1,2,0],[0,1,0,0,0,0,2]]);
-
 class Tile {
 	constructor(image, x, y, type) {
 		this.up = false;
@@ -66,6 +73,10 @@ class Tile {
 		this.posX = x;
 		this.posY = y;
 		this.type = type
+		this.blockup = (y == 0 ? true : false); 
+		this.blockdown = (y == rows - 1 ? true : false);
+		this.blockleft = (x == 0 ? true : false);
+		this.blockright = (x == cols - 1 ? true : false);
 	}
 	get connections() {
 		var count = 0;
@@ -83,24 +94,160 @@ class Tile {
 		}
 		return count;
 	}
-	ChangeRight() {
-		this.right = !(this.right);
-		this.image.src = DetermineImage(this.up, this.down, this.left, this.right, this.type);
+
+	Copy() {
+		var newTile = new Tile(this.image, this.posX, this.posY, this.type);
+		newTile.up = this.up;
+		newTile.down = this.down;
+		newTile.left = this.left;
+		newTile.right = this.right;
+		newTile.blockup = this.blockup;
+		newTile.blockdown = this.blockdown;
+		newTile.blockleft = this.blockleft;
+		newTile.blockright = this.blockright;
+		return newTile;
 	}
-	ChangeLeft() {
-		this.left = !(this.left);
-		this.image.src = DetermineImage(this.up, this.down, this.left, this.right, this.type);
-	}
-	ChangeUp() {
+	Same(tile) {
+		if (this.up == tile.up && this.down == tile.down && this.left == tile.left && this.right == tile.right) {
+			if (this.blockup == tile.blockup && this.blockdown == tile.blockdown && this.blockleft == tile.blockleft && this.blockright == tile.blockright) {
+				return true;
+            }
+		}
+		return false;
+    }
+
+	ChangeUp(grid) {
 		this.up = !(this.up);
 		this.image.src = DetermineImage(this.up, this.down, this.left, this.right, this.type);
+		var other = grid[this.posY - 1][this.posX];
+		other.down = !other.down;
+		other.image.src = DetermineImage(other.up, other.down, other.left, other.right, other.type);
+		this.BlockRemainingSides(grid);
+		other.BlockRemainingSides(grid);
 	}
-	ChangeDown() {
+	ChangeDown(grid) {
 		this.down = !(this.down);
 		this.image.src = DetermineImage(this.up, this.down, this.left, this.right, this.type);
+		var other = grid[this.posY + 1][this.posX];
+		other.up = !other.up;
+		other.image.src = DetermineImage(other.up, other.down, other.left, other.right, other.type);
+		this.BlockRemainingSides(grid);
+		other.BlockRemainingSides(grid);
 	}
+	ChangeLeft(grid) {
+		this.left = !(this.left);
+		this.image.src = DetermineImage(this.up, this.down, this.left, this.right, this.type);
+		var other = grid[this.posY][this.posX - 1];
+		other.right = !other.right;
+		other.image.src = DetermineImage(other.up, other.down, other.left, other.right, other.type);
+		this.BlockRemainingSides(grid);
+		other.BlockRemainingSides(grid);
+	}
+	ChangeRight(grid) {
+		this.right = !(this.right);
+		this.image.src = DetermineImage(this.up, this.down, this.left, this.right, this.type);
+		var other = grid[this.posY][this.posX + 1];
+		other.left = !other.left;
+		other.image.src = DetermineImage(other.up, other.down, other.left, other.right, other.type);
+		this.BlockRemainingSides(grid);
+		other.BlockRemainingSides(grid);
+	}
+	MakeUp(grid) {
+		if (this.blockup) {
+			return false;
+		}
+		if (!this.up) {
+			this.ChangeUp(grid);
+		}
+		return true;
+	}
+	MakeDown(grid) {
+		if (this.blockdown) {
+			return false;
+		} 
+		if (!this.down) {
+			this.ChangeDown(grid);
+		}
+		return true;
+	}
+	MakeLeft(grid) {
+		if (this.blockleft) {
+			return false;
+		}
+		if (!this.left) {
+			this.ChangeLeft(grid);
+		}
+		return true;
+	}
+	MakeRight(grid) {
+		if (this.blockright) {
+			return false;
+		}
+		if (!this.right) {
+			this.ChangeRight(grid);
+		}
+		return true;
+	}
+	MakeBlockup(grid) {
+		if (this.up) {
+			return false;
+		} 
+		this.blockup = true;
+		if (this.posY != 0) {
+			grid[this.posY - 1][this.posX].blockdown = true;
+		}
+		return true;
+	}
+	MakeBlockdown(grid) {
+		if (this.down) {
+			return false;
+		}
+		this.blockdown = true;
+		if (this.posY != rows - 1) {
+			grid[this.posY + 1][this.posX].blockup = true;
+		}
+		return true;
+	}
+	MakeBlockleft(grid) {
+		if (this.left) {
+			return false;
+		}
+		this.blockleft = true;
+		if (this.posX != 0) {
+			grid[this.posY][this.posX - 1].blockright = true;
+		}
+		return true;
+	}
+	MakeBlockright(grid) {
+		if (this.right) {
+			return false;
+		}
+		this.blockright = true;
+		if (this.posX != cols - 1) {
+			grid[this.posY][this.posX + 1].blockleft = true;
+		}
+		return true;
+	}
+	BlockRemainingSides(grid) {
+		if (this.connections == 2) {
+			if (!(this.up)) {
+				this.MakeBlockup(grid);
+			}
+			if (!(this.down)) {
+				this.MakeBlockdown(grid);
+			}
+			if (!(this.right)) {
+				this.MakeBlockright(grid);
+			}
+			if (!(this.left)) {
+				this.MakeBlockleft(grid);
+			}
+		}
+    }
 }
+// #endregion
 
+// #region grid
 function Select(tile) {
 	if (document.getElementById('edit').checked) {
 		tile.type = (tile.type + 1) % 3
@@ -113,17 +260,13 @@ function Select(tile) {
 			if (selected != null) {
 				selected.image.style.border = '1px solid white';
 				if (tile.posX == selected.posX + 1 && tile.posY == selected.posY) {
-					selected.ChangeRight();
-					tile.ChangeLeft();
+					selected.ChangeRight(tiles);
 				} else if (tile.posX == selected.posX - 1 && tile.posY == selected.posY) {
-					selected.ChangeLeft();
-					tile.ChangeRight();
+					selected.ChangeLeft(tiles);
 				} else if (tile.posY == selected.posY + 1 && tile.posX == selected.posX) {
-					selected.ChangeDown();
-					tile.ChangeUp();
+					selected.ChangeDown(tiles);
 				} else if (tile.posY == selected.posY - 1 && tile.posX == selected.posX) {
-					selected.ChangeUp();
-					tile.ChangeDown();
+					selected.ChangeUp(tiles);
 				}
 			}
 			selected = tile;
@@ -173,7 +316,9 @@ function LoadGrid(grid) {
 	}
 	div.appendChild(table);
 }
+// #endregion
 
+// #region CheckSolved
 function btnCheckSolved() {
 	if (CheckSolved(tiles)) {
 		alert("Solved");
@@ -326,3 +471,228 @@ function CheckCompleteClosed(grid, y, x) {
 	}
 	return true;
 }
+// #endregion
+
+// #region SolvePuzzle
+class Puzzle {
+	constructor(grid) {
+		this.grid = grid;
+		this.possible = true;
+		this.solved = false;
+	}
+	CopyGrid() {
+		var newGrid = [];
+		for (var i = 0; i < this.grid.length; i++) {
+			var newRow = [];
+			for (var j = 0; j < this.grid[0].length; j++) {
+				newRow.push(this.grid[i][j].Copy());
+			}
+			newGrid.push(newRow);
+		}
+		return newGrid;
+	}
+	SameGrid(grid) {
+		var same = true;
+		for (var i = 0; i < this.grid.length; i++) {
+			for (var j = 0; j < this.grid[0].length; j++) {
+				if (!this.grid[i][j].Same(grid[i][j])) {
+					same = false;
+                } 
+			}
+		}
+		return same;
+    }
+}
+
+function btnSolvePuzzle() {
+	var puzzle = new Puzzle(tiles);
+	SolvePuzzle(puzzle);
+}
+
+function SolvePuzzle(puzzle) {
+	var solving = true;
+	while (solving && puzzle.possible) {
+		var preSolve = puzzle.CopyGrid();
+		for (var i = 0; i < puzzle.grid.length; i++) {
+			for (var j = 0; j < puzzle.grid[0].length; j++) {
+				switch (puzzle.grid[i][j].type) {
+					case Type.open:
+						SolveOpen(puzzle, i, j);
+						break;
+					case Type.closed:
+						SolveClosed(puzzle, i, j);
+						break;
+					case Type.none:
+						if (puzzle.grid[i][j].connections == 1) {
+							SolveOneConnection(puzzle, i, j);
+						}
+						break;
+				}
+            }
+		}
+		if (puzzle.SameGrid(preSolve)) {
+			solving = false;
+        }
+    }
+}
+// #region SolveOpen
+function SolveOpen(puzzle, y, x) {
+	OpenOneWay(puzzle, y, x);
+	OpenBendSides(puzzle, y, x);
+}
+function OpenOneWay(puzzle, y, x) {
+	//Solve if line is entering one side
+	if (puzzle.grid[y][x].up) {
+		if (!(puzzle.grid[y][x].MakeDown(puzzle.grid))) {
+			puzzle.possible = false;
+			return;
+		}
+	} else if (puzzle.grid[y][x].down) {
+		if (!(puzzle.grid[y][x].MakeUp(puzzle.grid))) {
+			puzzle.possible = false;
+			return;
+		}
+	} else if (puzzle.grid[y][x].right) {
+		if (!(puzzle.grid[y][x].MakeLeft(puzzle.grid))) {
+			puzzle.possible = false;
+			return;
+		}
+	} else if (puzzle.grid[y][x].left) {
+		if (!(puzzle.grid[y][x].MakeRight(puzzle.grid))) {
+			puzzle.possible = false;
+			return;
+		}
+	}
+
+	//Solve if line can't enter one side
+	if (puzzle.grid[y][x].blockup || puzzle.grid[y][x].blockdown) {
+		if (!(puzzle.grid[y][x].MakeLeft(puzzle.grid) && puzzle.grid[y][x].MakeRight(puzzle.grid))) {
+			puzzle.possible = false;
+		}
+	} else if (puzzle.grid[y][x].blockright || puzzle.grid[y][x].blockleft) {
+		if (!(puzzle.grid[y][x].MakeUp(puzzle.grid) && puzzle.grid[y][x].MakeDown(puzzle.grid))) {
+			puzzle.possible = false;
+		}
+	}
+}
+
+function OpenBendSides(puzzle, y, x) {
+	if (puzzle.grid[y][x].up && puzzle.grid[y][x].down) {
+		if (puzzle.grid[y - 1][x].up) {
+			if (puzzle.grid[y + 1][x].MakeBlockdown(puzzle.grid) == false) {
+				puzzle.possible = false;
+            }
+		} else if (puzzle.grid[y + 1][x].down) {
+			if (puzzle.grid[y - 1][x].MakeBlockup(puzzle.grid) == false) {
+				puzzle.possible = false;
+			}
+		}
+	} else if (puzzle.grid[y][x].right && puzzle.grid[y][x].left) {
+		if (puzzle.grid[y][x - 1].left) {
+			if (puzzle.grid[y][x + 1].MakeBlockright(puzzle.grid) == false) {
+				puzzle.possible = false;
+			}
+		} else if (puzzle.grid[y][x + 1].right) {
+			if (puzzle.grid[y][x - 1].MakeBlockleft(puzzle.grid) == false) {
+				puzzle.possible = false;
+			}
+		}
+	}
+}
+// #endregion
+
+// #region SolveClosed
+function SolveClosed(puzzle, y, x) {
+	ClosedOneWay(puzzle, y, x);
+}
+
+function ClosedOneWay(puzzle, y, x) {
+	var up = false;
+	var down = false;
+	var left = false;
+	var right = false;
+	if (puzzle.grid[y][x].blockup || puzzle.grid[y][x].down) {
+		down = true;
+	} else if (puzzle.grid[y - 1][x].blockup) {
+		down = true;
+	}
+	if (puzzle.grid[y][x].blockdown || puzzle.grid[y][x].up) {
+		up = true;
+	} else if (puzzle.grid[y + 1][x].blockdown) {
+		up = true;
+	}
+	if (puzzle.grid[y][x].blockleft || puzzle.grid[y][x].right) {
+		right = true;
+	} else if (puzzle.grid[y][x - 1].blockleft) {
+		right = true;
+	}
+	if (puzzle.grid[y][x].blockright || puzzle.grid[y][x].left) {
+		left = true;
+	} else if (puzzle.grid[y][x + 1].blockright) {
+		left = true;
+	}
+
+	if (down) {
+		if (!(puzzle.grid[y][x].MakeDown(puzzle.grid) && puzzle.grid[y + 1][x].MakeDown(puzzle.grid) && puzzle.grid[y][x].MakeBlockup(puzzle.grid))) {
+			puzzle.possible = false
+        }
+	}
+	if (up) {
+		if (!(puzzle.grid[y][x].MakeUp(puzzle.grid) && puzzle.grid[y - 1][x].MakeUp(puzzle.grid) && puzzle.grid[y][x].MakeBlockdown(puzzle.grid))) {
+			puzzle.possible = false
+		}
+	}
+	if (right) {
+		if (!(puzzle.grid[y][x].MakeRight(puzzle.grid) && puzzle.grid[y][x + 1].MakeRight(puzzle.grid) && puzzle.grid[y][x].MakeBlockleft(puzzle.grid))) {
+			puzzle.possible = false
+		}
+	}
+	if (left) {
+		if (!(puzzle.grid[y][x].MakeLeft(puzzle.grid) && puzzle.grid[y][x - 1].MakeLeft(puzzle.grid) && puzzle.grid[y][x].MakeBlockright(puzzle.grid))) {
+			puzzle.possible = false
+		}
+	}
+}
+// #endregion 
+
+// #region SolveOneConnection
+function SolveOneConnection(puzzle, y, x) {
+	OCOneWay(puzzle, y, x);
+}
+
+function OCOneWay(puzzle, y, x) {
+	var counter = 0;
+	var up = false;
+	var down = false;
+	var left = false;
+	if (puzzle.grid[y][x].up || puzzle.grid[y][x].blockup) {
+		up = true;
+		counter += 1;
+	}
+	if (puzzle.grid[y][x].down || puzzle.grid[y][x].blockdown) {
+		down = true;
+		counter += 1;
+	}
+	if (puzzle.grid[y][x].left || puzzle.grid[y][x].blockleft) {
+		left = true;
+		counter += 1;
+	}
+	if (puzzle.grid[y][x].right || puzzle.grid[y][x].blockright) {
+		counter += 1;
+	}
+	if (counter == 3) {
+		if (up == false) {
+			puzzle.grid[y][x].MakeUp(puzzle.grid);
+		} else if (down == false) {
+			puzzle.grid[y][x].MakeDown(puzzle.grid);
+		} else if (left == false) {
+			puzzle.grid[y][x].MakeLeft(puzzle.grid);
+		} else {
+			puzzle.grid[y][x].MakeRight(puzzle.grid);
+		}
+	} else if (counter == 4) {
+		puzzle.possible = false;
+    }
+}
+// #endregion 
+// #endregion
