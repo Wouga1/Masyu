@@ -46,6 +46,16 @@ function DetermineImage(up, down, left, right, type) {
 	return image;
 }
 
+class Grid {
+	constructor(tiles) {
+		this.rows = tiles.length;
+		this.cols = tiles[0].length;
+		this.tiles = tiles;
+	}
+}
+const p1 = new Grid([[2,1,0,1,0,0],[1,0,0,0,0,0],[2,1,0,0,0,1],[2,1,0,2,1,2],[1,0,0,1,0,0],[2,1,1,2,0,0]])
+const p2 = new Grid([[0,0,0,1,0,1,2],[1,0,0,1,0,0,1],[0,1,0,1,1,0,0],[0,0,0,0,1,2,0],[0,1,0,0,0,1,0],[0,1,0,0,1,2,0],[0,1,0,0,0,0,2]]);
+
 class Tile {
 	constructor(image, x, y, type) {
 		this.up = false;
@@ -107,9 +117,21 @@ function Select(tile) {
 }
 
 function CreateGrid(width, height) {
+	var emptyGridArray = []
+	for (var i = 0; i < height; i++) {
+		var emptyCol = [];
+		for (var j = 0; j < width; j++) {
+			emptyCol.push(Type.none);
+		}
+		emptyGridArray.push(emptyCol);
+	}
+	LoadGrid(new Grid(emptyGridArray));
+}
+	
+function LoadGrid(grid) {
 	tiles = [];
-	cols = width;
-	rows = height;
+	cols = grid.cols;
+	rows = grid.rows;
 	var div = document.getElementById('grid');
 	if (div.children.length != 0) {
 		div.children[0].remove();
@@ -121,10 +143,10 @@ function CreateGrid(width, height) {
 		for (var j = 0; j < cols; j++) {
 			var cell = document.createElement('td');
 			var image = document.createElement('img');
-			image.src = 'images/empty.png';
 			image.width = '50';
 			image.onclick = function(){Select(this.tile);};
-			var newTile = new Tile(image, j, i, Type.none);
+			var newTile = new Tile(image, j, i, grid.tiles[i][j]);
+			image.src = DetermineImage(newTile.up, newTile.down, newTile.left, newTile.right, newTile.type);
 			image.tile = newTile
 			tileRow.push(newTile);
 			cell.appendChild(image);

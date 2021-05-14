@@ -4,14 +4,20 @@
 	<meta charset="utf-8">
 	<link rel="stylesheet" href="styles.css">
 	<script src="script.js"></script>
-	<title>v1.1.1 Masyu</title>
+	<title>v1.2.0 Masyu</title>
 </head>
 
-<body onLoad="CreateGrid(6,6)">
+<body onLoad="LoadGrid(p1)">
+	<b>GRID EDITING</b><br/>
 	Number of Rows: <input id="rows" type="number" value="6"> <br/>
 	Number of Columns: <input id="cols" type="number" value="6"> <br/>
 	<button onClick="CreateGrid(document.getElementById('cols').value, document.getElementById('rows').value)">Generate Grid</button> <br/>
-	Editing mode: <input id="edit" type="checkbox"> <br>
+	Editing mode: <input id="edit" type="checkbox"> <br/><br/>
+	<b>LOAD GRID</b><br/>
+	<select id="puzzleSelect" onChange="LoadGrid(eval(value))">;
+		<option value="p1">Puzzle 1</option>
+		<option value="p2">Puzzle 2</option>
+	</select><br/><br/>
 	<div id="grid"></div>
 </body>
 </html>
