@@ -67,6 +67,22 @@ class Tile {
 		this.posY = y;
 		this.type = type
 	}
+	get connections() {
+		var count = 0;
+		if (this.up) {
+			count +=  1;
+		}
+		if (this.down) {
+			count += 1;
+		}
+		if (this.left) {
+			count += 1;
+		}
+		if (this.right) {
+			count += 1
+		}
+		return count;
+	}
 	ChangeRight() {
 		this.right = !(this.right);
 		this.image.src = DetermineImage(this.up, this.down, this.left, this.right, this.type);
@@ -156,4 +172,153 @@ function LoadGrid(grid) {
 		table.appendChild(row);
 	}
 	div.appendChild(table);
+}
+
+function btnCheckSolved() {
+	if (CheckSolved(tiles)) {
+		alert("Solved");
+	} else {
+		alert("Not Solved");
+	}
+}
+
+function CheckSolved(grid) {
+	if (CheckConnections(grid)) {
+		if (CheckSingleLoop(grid)) {
+			for (i=0;i<grid.length;i++) {
+				for (j=0;j<grid[0].length;j++) {
+					if (grid[i][j].type == Type.open) {
+						if (!(CheckCompleteOpen(grid, i, j))) {
+							return false;
+						} 
+					} else if (grid[i][j].type == Type.closed) {
+						if (!(CheckCompleteClosed(grid, i, j))) {
+							return false;
+						}
+					}
+				}
+			}
+			return true;
+		}
+	}
+	return false;
+}
+
+function CheckConnections(grid) {
+	for (i=0; i<grid.length; i++) {
+		for (j=0; j<grid[0].length; j++) {
+			if (grid[i][j].connections != 0 && grid[i][j].connections != 2) {
+				return false;
+			}
+		}
+	}
+	return true;
+}
+
+function CheckSingleLoop(grid) {
+	//find a starting position
+	var startX = -1;
+	var startY = -1;
+	var i = 0;
+	while (i < grid.length && startX == -1) {
+		j = 0;
+		while (j < grid[0].length && startX == -1) {
+			if (grid[i][j].connections > 1) {
+				startX = j;
+				startY = i;
+			}
+			j += 1;
+		}
+		i += 1;
+	}
+	//choose a direction to start moving
+	var nextX = startX;
+	var nextY = startY;
+	if (grid[startY][startX].up) {
+		nextY -= 1;
+	} else if (grid[startY][startX].down) {
+		nextY += 1;
+	} else {
+		nextX -= 1;
+	}
+	var prevX = startX;
+	var prevY = startY;
+	//follow loop and mark points
+	markGrid = [];
+	for (i=0;i<grid.length;i++) {
+		var tempRow = [];
+		for (j=0;j<grid[0].length;j++) {
+			tempRow.push(false)
+		}
+		markGrid.push(tempRow);
+	}
+	markGrid[startY][startX] = true;
+	while (!(nextX == startX && nextY == startY)) {
+		markGrid[nextY][nextX] = true;
+		tempX = nextX;
+		tempY = nextY;
+		if (grid[nextY][nextX].up && !(prevY == nextY - 1 && prevX == nextX)) {
+			nextY -= 1;
+		} else if (grid[nextY][nextX].down && !(prevY == nextY + 1 && prevX == nextX)) {
+			nextY += 1;
+		} else if (grid[nextY][nextX].left && !(prevX == nextX - 1 && prevY == nextY)) {
+			nextX -= 1;
+		} else {
+			nextX += 1;
+		}
+		prevX = tempX;
+		prevY = tempY;
+	}
+	//check if there is a tile with a line that is not in a position that is true in markGrid
+	for (i=0;i<grid.length;i++) {
+		for (j=0;j<grid[0].length;j++) {
+			if (grid[i][j].connections > 0 && markGrid[i][j] == false) {
+				return false;
+			}
+		}
+	}
+	return true;
+}
+
+function CheckCompleteOpen(grid, y, x) {
+	if (!((grid[y][x].up && grid[y][x].down) || (grid[y][x].left && grid[y][x].right))) {
+		return false;
+	}
+	if (grid[y][x].up) {
+		if (grid[y-1][x].up && grid[y+1][x].down) {
+			return false;
+		}
+	} else {
+		if (grid[y][x-1].left && grid[y][x+1].right) {
+			return false;
+		}
+	}
+	return true;
+}
+
+function CheckCompleteClosed(grid, y, x) {
+	if ((grid[y][x].up && grid[y][x].down) || (grid[y][x].left && grid[y][x].right)) {
+		return false;
+	}
+	if (grid[y][x].up) {
+		if (grid[y-1][x].up == false) {
+			return false;
+		}
+	} 
+	if (grid[y][x].down) {
+		if (grid[y+1][x].down == false) {
+			return false;
+		}
+	}
+	if (grid[y][x].left) {
+		if (grid[y][x-1].left == false) {
+			return false;
+		}
+	} 
+	if (grid[y][x].right) {
+		if (grid[y][x+1].right == false) {
+			return false;
+		}
+	}
+	return true;
 }
