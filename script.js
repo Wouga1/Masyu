@@ -600,6 +600,11 @@ function SolvePuzzle(puzzle) {
 function SolveOpen(puzzle, y, x) {
 	OpenOneWay(puzzle, y, x);
 	OpenBendSides(puzzle, y, x);
+	if (!(y == 0 || y == puzzle.grid.length - 1 || x == 0 || x == puzzle.grid[0].length - 1)) {
+		OpenThree(puzzle, y, x);
+		OpenStraight(puzzle, y, x);
+		OpenTwoStraight(puzzle, y, x);
+    }
 }
 function OpenOneWay(puzzle, y, x) {
 	//Solve if line is entering one side
@@ -660,11 +665,54 @@ function OpenBendSides(puzzle, y, x) {
 		}
 	}
 }
+
+function OpenThree(puzzle, y, x) {
+	if (puzzle.grid[y - 1][x].type == Type.open && puzzle.grid[y + 1][x].type == Type.open) {
+		if (!(puzzle.grid[y][x].MakeLeft(puzzle.grid) && puzzle.grid[y][x].MakeRight(puzzle.grid))) {
+			puzzle.possible = false;
+		}
+	}
+	if (puzzle.grid[y][x - 1].type == Type.open && puzzle.grid[y][x + 1].type == Type.open) {
+		if (!(puzzle.grid[y][x].MakeUp(puzzle.grid) && puzzle.grid[y][x].MakeDown(puzzle.grid))) {
+			puzzle.possible = false;
+		}
+	}
+}
+
+function OpenStraight(puzzle, y, x) {
+	if (puzzle.grid[y - 1][x].up && puzzle.grid[y + 1][x].down) {
+		if (!(puzzle.grid[y][x].MakeLeft(puzzle.grid) && puzzle.grid[y][x].MakeRight(puzzle.grid))) {
+			puzzle.possible = false;
+		}
+	}
+	if (puzzle.grid[y][x - 1].left && puzzle.grid[y][x + 1].right) {
+		if (!(puzzle.grid[y][x].MakeUp(puzzle.grid) && puzzle.grid[y][x].MakeDown(puzzle.grid))) {
+			puzzle.possible = false;
+		}
+	}
+}
+
+function OpenTwoStraight(puzzle, y, x) {
+	if ((puzzle.grid[y - 1][x].type == Type.open && puzzle.grid[y + 1][x].down) || (puzzle.grid[y + 1][x].type == Type.open && puzzle.grid[y - 1][x].up)) {
+		if (!(puzzle.grid[y][x].MakeLeft(puzzle.grid) && puzzle.grid[y][x].MakeRight(puzzle.grid))) {
+			puzzle.possible = false;
+		}
+	}
+	if ((puzzle.grid[y][x - 1].type == Type.open && puzzle.grid[y][x + 1].right) || (puzzle.grid[y][x + 1].type == Type.open && puzzle.grid[y][x - 1].left)) {
+		if (!(puzzle.grid[y][x].MakeUp(puzzle.grid) && puzzle.grid[y][x].MakeDown(puzzle.grid))) {
+			puzzle.possible = false;
+		}
+	}
+}
 // #endregion
 
 // #region SolveClosed
 function SolveClosed(puzzle, y, x) {
 	ClosedOneWay(puzzle, y, x);
+	if (!(y == 0 || y == puzzle.grid.length - 1 || x == 0 || x == puzzle.grid[0].length - 1)) {
+		ClosedTwo(puzzle, y, x);
+		ClosedTwoOpens(puzzle, y, x);
+	}
 }
 
 function ClosedOneWay(puzzle, y, x) {
@@ -714,6 +762,61 @@ function ClosedOneWay(puzzle, y, x) {
 		}
 	}
 }
+
+function ClosedTwo(puzzle, y, x) {
+	if (puzzle.grid[y - 1][x].type == Type.closed) {
+		if (!(puzzle.grid[y][x].MakeDown(puzzle.grid) && puzzle.grid[y + 1][x].MakeDown(puzzle.grid) && puzzle.grid[y][x].MakeBlockup(puzzle.grid))) {
+			puzzle.possible = false
+		}
+	}
+	if (puzzle.grid[y + 1][x].type == Type.closed) {
+		if (!(puzzle.grid[y][x].MakeUp(puzzle.grid) && puzzle.grid[y - 1][x].MakeUp(puzzle.grid) && puzzle.grid[y][x].MakeBlockdown(puzzle.grid))) {
+			puzzle.possible = false
+		}
+	}
+	if (puzzle.grid[y][x - 1].type == Type.closed) {
+		if (!(puzzle.grid[y][x].MakeRight(puzzle.grid) && puzzle.grid[y][x + 1].MakeRight(puzzle.grid) && puzzle.grid[y][x].MakeBlockleft(puzzle.grid))) {
+			puzzle.possible = false
+		}
+	}
+	if (puzzle.grid[y][x + 1].type == Type.closed) {
+		if (!(puzzle.grid[y][x].MakeLeft(puzzle.grid) && puzzle.grid[y][x - 1].MakeLeft(puzzle.grid) && puzzle.grid[y][x].MakeBlockright(puzzle.grid))) {
+			puzzle.possible = false
+		}
+	}
+}
+
+function ClosedTwoOpens(puzzle, y, x) {
+	if (y >= 3) {
+		if (puzzle.grid[y - 2][x].type == Type.open && puzzle.grid[y - 3][x].type == Type.open) {
+			if (!(puzzle.grid[y][x].MakeDown(puzzle.grid) && puzzle.grid[y + 1][x].MakeDown(puzzle.grid) && puzzle.grid[y][x].MakeBlockup(puzzle.grid))) {
+				puzzle.possible = false
+			}
+        }
+	}
+	if (y <= puzzle.grid.length - 4) {
+		if (puzzle.grid[y + 2][x].type == Type.open && puzzle.grid[y + 3][x].type == Type.open) {
+			if (!(puzzle.grid[y][x].MakeUp(puzzle.grid) && puzzle.grid[y - 1][x].MakeUp(puzzle.grid) && puzzle.grid[y][x].MakeBlockdown(puzzle.grid))) {
+				puzzle.possible = false
+			}
+		}
+	}
+	if (x >= 3) {
+		if (puzzle.grid[y][x - 2].type == Type.open && puzzle.grid[y][x - 3].type == Type.open) {
+			if (!(puzzle.grid[y][x].MakeRight(puzzle.grid) && puzzle.grid[y][x + 1].MakeRight(puzzle.grid) && puzzle.grid[y][x].MakeBlockleft(puzzle.grid))) {
+				puzzle.possible = false
+			}
+		}
+	}
+	if (x <= puzzle.grid[0].length - 4) {
+		if (puzzle.grid[y][x + 2].type == Type.open && puzzle.grid[y][x + 3].type == Type.open) {
+			if (!(puzzle.grid[y][x].MakeLeft(puzzle.grid) && puzzle.grid[y][x - 1].MakeLeft(puzzle.grid) && puzzle.grid[y][x].MakeBlockright(puzzle.grid))) {
+				puzzle.possible = false
+			}
+		}
+	}
+}
+
 // #endregion 
 
 // #region SolveOneConnection
