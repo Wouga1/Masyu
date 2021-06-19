@@ -101,7 +101,6 @@ class Tile {
 	}
 
 	Copy() {
-		//var newTile = new Tile(this.image, this.posX, this.posY, this.type);
 		var newTile = new Tile(this.image, this.posX, this.posY, this.type);
 		newTile.up = this.up;
 		newTile.down = this.down;
@@ -131,10 +130,7 @@ class Tile {
 		if (this.up) {
 			this.BlockRemainingSides(grid);
 			other.BlockRemainingSides(grid);
-		} else {
-			this.UnblockSides(grid);
-			other.UnblockSides(grid);
-        }
+		}
 	}
 	ChangeDown(grid) {
 		this.down = !(this.down);
@@ -145,9 +141,6 @@ class Tile {
 		if (this.down) {
 			this.BlockRemainingSides(grid);
 			other.BlockRemainingSides(grid);
-		} else {
-			this.UnblockSides(grid);
-			other.UnblockSides(grid);
 		}
 	}
 	ChangeLeft(grid) {
@@ -159,10 +152,7 @@ class Tile {
 		if (this.left) {
 			this.BlockRemainingSides(grid);
 			other.BlockRemainingSides(grid);
-		} else {
-			this.UnblockSides(grid);
-			other.UnblockSides(grid);
-		}
+		} 
 	}
 	ChangeRight(grid) {
 		this.right = !(this.right);
@@ -173,9 +163,6 @@ class Tile {
 		if (this.right) {
 			this.BlockRemainingSides(grid);
 			other.BlockRemainingSides(grid);
-		} else {
-			this.UnblockSides(grid);
-			other.UnblockSides(grid);
 		}
 	}
 	MakeUp(grid) {
@@ -270,22 +257,33 @@ class Tile {
 			}
 		}
 	}
-	UnblockSides(grid) {
-		if (this.posY != 0) {
-			this.blockup = false;
-			grid[this.posY - 1][this.posX].blockdown = false;
+	ResetBlocks(grid) {
+		this.blockup = false;
+		if (this.posY == 0) {
+			this.blockup = true;
+		} else if (!this.up && grid[this.posY - 1][this.posX].connections == 2) {
+			this.blockup = true;
 		}
-		if (this.posY != rows - 1) {
-			this.blockdown = false;
-			grid[this.posY + 1][this.posX].blockup = false;
+		this.blockdown = false;
+		if (this.posY == grid.length - 1) {
+			this.blockdown = true;
+		} else if (!this.down && grid[this.posY + 1][this.posX].connections == 2) {
+			this.blockdown = true;
 		}
-		if (this.posX != 0) {
-			this.blockleft = false;
-			grid[this.posY][this.posX - 1].blockright = false;
+		this.blockleft = false;
+		if (this.posX == 0) {
+			this.blockleft = true;
+		} else if (!this.left && grid[this.posY][this.posX - 1].connections == 2) {
+			this.blockleft = true;
 		}
-		if (this.posX != cols - 1) {
-			this.blockright = false;
-			grid[this.posY][this.posX + 1].blockleft = false;
+		this.blockright = false;
+		if (this.posX == grid[0].length - 1) {
+			this.blockright = true;
+		} else if (!this.right && grid[this.posY][this.posX + 1].connections == 2) {
+			this.blockright = true;
+		}
+		if (this.connections == 2) {
+			this.BlockRemainingSides(grid);
 		}
     }
 }
@@ -332,6 +330,7 @@ function CreateGrid(width, height) {
 }
 	
 function LoadGrid(grid) {
+	selected = null;
 	tiles = [];
 	cols = grid.cols;
 	rows = grid.rows;
@@ -553,14 +552,22 @@ class Puzzle {
 			}
 		}
 	}
+	ResetAllBlocks() {
+		for (var i = 0; i < this.grid.length; i++) {
+			for (var j = 0; j < this.grid[0].length; j++) {
+				this.grid[i][j].ResetBlocks(this.grid);
+            }
+        }
+    }
 }
 
 function btnSolvePuzzle() {
 	var puzzle = new Puzzle(tiles);
-	SolvePuzzle(puzzle);
+	puzzle.ResetAllBlocks();
+	SolvePuzzle(puzzle, true);
 }
 
-function SolvePuzzle(puzzle) {
+function SolvePuzzle(puzzle, hasImages) {
 	var solving = true;
 	while (solving && puzzle.possible) {
 		var preSolve = puzzle.CopyGrid();
@@ -593,9 +600,12 @@ function SolvePuzzle(puzzle) {
 		if (puzzle.SameGrid(preSolve)) {
 			solving = false;
         }
-    }
-	puzzle.UpdateImages();
+	}
+	if (hasImages) {
+		puzzle.UpdateImages();
+	}
 }
+
 // #region SolveOpen
 function SolveOpen(puzzle, y, x) {
 	OpenOneWay(puzzle, y, x);
@@ -862,53 +872,69 @@ function OCOneWay(puzzle, y, x) {
 
 function OCCompleteLoop(puzzle, y, x) {
 	if (puzzle.grid[y][x].blockup == false && puzzle.grid[y][x].up == false) {
-		if (puzzle.grid[y - 1][x].connections == 1) {
-			if (puzzle.grid[y][x] === FindOtherSide(puzzle, puzzle.grid[y - 1][x])) {
-				var testGrid = puzzle.CopyGrid();
-				testGrid[y][x].MakeUp(testGrid);
-				if (CheckSolved(testGrid)) {
-					puzzle.grid[y][x].MakeUp(puzzle.grid);
-				} else {
-					puzzle.grid[y][x].MakeBlockup(puzzle.grid);
+		if (puzzle.grid[y - 1][x].connections <= 1) {
+			var connected = ContinuesTo(puzzle, puzzle.grid[y - 1][x], Direction.down)
+			if (connected != null) {
+				if (puzzle.grid[y][x] === FindOtherSide(puzzle, connected)) {
+					var testPuzzle = new Puzzle(puzzle.CopyGrid());
+					testPuzzle.grid[y][x].MakeUp(testPuzzle.grid);
+					SolvePuzzle(testPuzzle, false);
+					if (CheckSolved(testPuzzle.grid)) {
+						puzzle.grid[y][x].MakeUp(puzzle.grid);
+					} else {
+						puzzle.grid[y][x].MakeBlockup(puzzle.grid);
+					}
 				}
 			}
 		}
 	}
 	if (puzzle.grid[y][x].blockdown == false && puzzle.grid[y][x].down == false) {
-		if (puzzle.grid[y + 1][x].connections == 1) {
-			if (puzzle.grid[y][x] === FindOtherSide(puzzle, puzzle.grid[y + 1][x])) {
-				var testGrid = puzzle.CopyGrid();
-				testGrid[y][x].MakeDown(testGrid);
-				if (CheckSolved(testGrid)) {
-					puzzle.grid[y][x].MakeDown(puzzle.grid);
-				} else {
-					puzzle.grid[y][x].MakeBlockdown(puzzle.grid);
+		if (puzzle.grid[y + 1][x].connections <= 1) {
+			var connected = ContinuesTo(puzzle, puzzle.grid[y + 1][x], Direction.up)
+			if (connected != null) {
+				if (puzzle.grid[y][x] === FindOtherSide(puzzle, connected)) {
+					var testPuzzle = new Puzzle(puzzle.CopyGrid());
+					testPuzzle.grid[y][x].MakeDown(testPuzzle.grid);
+					SolvePuzzle(testPuzzle, false);
+					if (CheckSolved(testPuzzle.grid)) {
+						puzzle.grid[y][x].MakeDown(puzzle.grid);
+					} else {
+						puzzle.grid[y][x].MakeBlockdown(puzzle.grid);
+					}
 				}
 			}
 		}
 	}
 	if (puzzle.grid[y][x].blockleft == false && puzzle.grid[y][x].left == false) {
-		if (puzzle.grid[y][x - 1].connections == 1) {
-			if (puzzle.grid[y][x] === FindOtherSide(puzzle, puzzle.grid[y][x - 1])) {
-				var testGrid = puzzle.CopyGrid();
-				testGrid[y][x].MakeLeft(testGrid);
-				if (CheckSolved(testGrid)) {
-					puzzle.grid[y][x].MakeLeft(puzzle.grid);
-				} else {
-					puzzle.grid[y][x].MakeBlockleft(puzzle.grid);
+		if (puzzle.grid[y][x - 1].connections <= 1) {
+			var connected = ContinuesTo(puzzle, puzzle.grid[y][x - 1], Direction.right)
+			if (connected != null) {
+				if (puzzle.grid[y][x] === FindOtherSide(puzzle, connected)) {
+					var testPuzzle = new Puzzle(puzzle.CopyGrid());
+					testPuzzle.grid[y][x].MakeLeft(testPuzzle.grid);
+					SolvePuzzle(testPuzzle, false);
+					if (CheckSolved(testPuzzle.grid)) {
+						puzzle.grid[y][x].MakeLeft(puzzle.grid);
+					} else {
+						puzzle.grid[y][x].MakeBlockleft(puzzle.grid);
+					}
 				}
 			}
 		}
 	}
 	if (puzzle.grid[y][x].blockright == false && puzzle.grid[y][x].right == false) {
-		if (puzzle.grid[y][x + 1].connections == 1) {
-			if (puzzle.grid[y][x] === FindOtherSide(puzzle, puzzle.grid[y][x + 1])) {
-				var testGrid = puzzle.CopyGrid();
-				testGrid[y][x].MakeRight(testGrid);
-				if (CheckSolved(testGrid)) {
-					puzzle.grid[y][x].MakeRight(puzzle.grid);
-				} else {
-					puzzle.grid[y][x].MakeBlockright(puzzle.grid);
+		if (puzzle.grid[y][x + 1].connections <= 1) {
+			var connected = ContinuesTo(puzzle, puzzle.grid[y][x + 1], Direction.left)
+			if (connected != null) {
+				if (puzzle.grid[y][x] === FindOtherSide(puzzle, connected)) {
+					var testPuzzle = new Puzzle(puzzle.CopyGrid());
+					testPuzzle.grid[y][x].MakeRight(testPuzzle.grid);
+					SolvePuzzle(testPuzzle, false);
+					if (CheckSolved(testPuzzle.grid)) {
+						puzzle.grid[y][x].MakeRight(puzzle.grid);
+					} else {
+						puzzle.grid[y][x].MakeBlockright(puzzle.grid);
+					}
 				}
 			}
 		}
@@ -942,6 +968,146 @@ function FindOtherSide(puzzle, tile) {
 		}
 	} while (currentTile.connections != 1);
 	return currentTile;
+}
+
+function ContinuesTo(puzzle, tile, direction) {
+	var currentTile = tile;
+	var cameFrom = direction;
+	var straightCount = 0;
+	var lastClosed = false;
+	var lastStraightOpen = false;
+	var searching = true;
+	while (searching) {
+		if (currentTile.connections == 1) {
+			return currentTile;
+		}
+		if (currentTile.type == Type.Open || lastClosed) {
+			if ((currentTile.type == type.Open && straightCount == 2) || currentTile.type == Type.closed) {
+				searching = false;
+			} else {
+				if (currentTile.type == type.Open && straightCount == 1) {
+					lastStraightOpen = true;
+				}
+				if (cameFrom = Direction.up) {
+					if (currentTile.left || currentTile.right || currentTile.blockup) {
+						searching = false;
+					} else {
+						currentTile = puzzle.grid[currentTile.posY - 1][currentTile.posX];
+					}
+				} else if (cameFrom = Direction.down) {
+					if (currentTile.left || currentTile.right || currentTile.blockdown) {
+						searching = false;
+					} else {
+						currentTile = puzzle.grid[currentTile.posY + 1][currentTile.posX];
+					}
+				} else if (cameFrom = Direction.left) {
+					if (currentTile.up || currentTile.down || currentTile.blockleft) {
+						searching = false;
+					} else {
+						currentTile = puzzle.grid[currentTile.posY][currentTile.posX - 1];
+					}
+				} else {
+					if (currentTile.up || currentTile.down || currentTile.blockright) {
+						searching = false;
+					} else {
+						currentTile = puzzle.grid[currentTile.posY][currentTile.posX + 1];
+					}
+				}
+				straightCount += 1
+				lastClosed = false;
+			}
+		} else {
+			var blockCount = 0;
+			var up = true;
+			var down = true;
+			var left = true;
+			var right = true;
+			if (currentTile.blockup || cameFrom == Direction.up) {
+				up = false;
+				blockCount += 1;
+			}
+			if (currentTile.blockdown || cameFrom == Direction.down) {
+				down = false;
+				blockCount += 1;
+			}
+			if (currentTile.blockleft || cameFrom == Direction.left) {
+				left = false;
+				blockCount += 1;
+			}
+			if (currentTile.blockright || cameFrom == Direction.right) {
+				right = false;
+				blockCount += 1;
+			}
+			if (currentTile.type == Type.closed) {
+				lastClosed = true;
+				switch (cameFrom) {
+					case Direction.up:
+						down = false;
+						break;
+					case Direction.Down:
+						up = false;
+						break;
+					case Direction.Left:
+						right = false;
+						break;
+					case Direction.Right:
+						left = false;
+						break;
+                }
+			}
+			if (blockCount == 3) {
+				if (up) {
+					currentTile = puzzle.grid[currentTile.posY - 1][currentTile.posX];
+					if (cameFrom == Direction.down) {
+						straightCount += 1;
+						if (lastStraightOpen) {
+							searching = false;
+						}
+					} else {
+						straightCount = 0;
+					}
+					cameFrom = Direction.down;
+				} else if (down) {
+					currentTile = puzzle.grid[currentTile.posY + 1][currentTile.posX];
+					if (cameFrom == Direction.up) {
+						straightCount += 1;
+						if (lastStraightOpen) {
+							searching = false;
+						}
+					} else {
+						straightCount = 0;
+					}
+					cameFrom = Direction.down;
+				} else if (left) {
+					currentTile = puzzle.grid[currentTile.posY][currentTile.posX - 1];
+					if (cameFrom == Direction.right) {
+						straightCount += 1;
+						if (lastStraightOpen) {
+							searching = false;
+						}
+					} else {
+						straightCount = 0;
+					}
+					cameFrom = Direction.right;
+				} else {
+					currentTile = puzzle.grid[currentTile.posY][currentTile.posX + 1];
+					if (cameFrom == Direction.left) {
+						straightCount += 1;
+						if (lastStraightOpen) {
+							searching = false;
+						}
+					} else {
+						straightCount = 0;
+					}
+					cameFrom = Direction.left;
+				}
+			} else {
+				searching = false;
+			}
+			lastStraightOpen = false;
+        }
+	}
+	return null; 
 }
 // #endregion 
 
