@@ -363,10 +363,11 @@ function LoadGrid(grid) {
 
 // #region CheckSolved
 function btnCheckSolved() {
+	var output = document.getElementById('output');
 	if (CheckSolved(tiles)) {
-		alert("Solved");
+		output.value = 'Puzzle is solved';
 	} else {
-		alert("Not Solved");
+		output.value = 'Puzzle is not solved';
 	}
 }
 
@@ -565,6 +566,14 @@ function btnSolvePuzzle() {
 	var puzzle = new Puzzle(tiles);
 	puzzle.ResetAllBlocks();
 	SolvePuzzle(puzzle, true);
+	var output = document.getElementById('output');
+	if (puzzle.solved) {
+		output.value = "Puzzle has been solved"
+	} else if (puzzle.possible) {
+		output.value = "Puzzle has not been solved";
+	} else {
+		output.value = "Puzzle is impossible";
+    }
 }
 
 function SolvePuzzle(puzzle, hasImages) {
@@ -604,6 +613,7 @@ function SolvePuzzle(puzzle, hasImages) {
 	if (hasImages) {
 		puzzle.UpdateImages();
 	}
+	puzzle.solved = (CheckSolved(puzzle.grid) ? true : false)
 }
 
 // #region SolveOpen
