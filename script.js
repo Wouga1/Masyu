@@ -112,6 +112,16 @@ class Tile {
 		newTile.blockright = this.blockright;
 		return newTile;
 	}
+	CopyData(tile) {
+		this.up = tile.up;
+		this.down = tile.down;
+		this.left = tile.left;
+		this.right = tile.right;
+		this.blockup = tile.blockup;
+		this.blockdown = tile.blockdown;
+		this.blockleft = tile.blockleft;
+		this.blockright = tile.blockright;
+	}
 	Same(tile) {
 		if (this.up == tile.up && this.down == tile.down && this.left == tile.left && this.right == tile.right) {
 			if (this.blockup == tile.blockup && this.blockdown == tile.blockdown && this.blockleft == tile.blockleft && this.blockright == tile.blockright) {
@@ -170,7 +180,11 @@ class Tile {
 			return false;
 		}
 		if (!this.up) {
-			this.ChangeUp(grid);
+			this.up = true;
+			var other = grid[this.posY - 1][this.posX];
+			other.down = true;
+			this.BlockRemainingSides(grid);
+			other.BlockRemainingSides(grid);
 		}
 		return true;
 	}
@@ -179,7 +193,11 @@ class Tile {
 			return false;
 		} 
 		if (!this.down) {
-			this.ChangeDown(grid);
+			this.down = true;
+			var other = grid[this.posY + 1][this.posX];
+			other.up = true;
+			this.BlockRemainingSides(grid);
+			other.BlockRemainingSides(grid);
 		}
 		return true;
 	}
@@ -188,7 +206,11 @@ class Tile {
 			return false;
 		}
 		if (!this.left) {
-			this.ChangeLeft(grid);
+			this.left = true;
+			var other = grid[this.posY][this.posX - 1];
+			other.right = true;
+			this.BlockRemainingSides(grid);
+			other.BlockRemainingSides(grid);
 		}
 		return true;
 	}
@@ -197,7 +219,11 @@ class Tile {
 			return false;
 		}
 		if (!this.right) {
-			this.ChangeRight(grid);
+			this.right = true;
+			var other = grid[this.posY][this.posX + 1];
+			other.left = true;
+			this.BlockRemainingSides(grid);
+			other.BlockRemainingSides(grid);
 		}
 		return true;
 	}
@@ -559,13 +585,20 @@ class Puzzle {
 				this.grid[i][j].ResetBlocks(this.grid);
             }
         }
+	}
+	CopyTiles(grid) {
+		for (var i = 0; i < grid.length; i++) {
+			for (var j = 0; j < grid[0].length; j++) {
+				this.grid[i][j].CopyData(grid[i][j]);
+			}
+		}
     }
 }
 
 function btnSolvePuzzle() {
 	var puzzle = new Puzzle(tiles);
 	puzzle.ResetAllBlocks();
-	SolvePuzzle(puzzle, true);
+	BranchSolvePuzzle(puzzle, document.getElementById("depth").value);
 	var output = document.getElementById('output');
 	if (puzzle.solved) {
 		output.value = "Puzzle has been solved"
@@ -573,10 +606,104 @@ function btnSolvePuzzle() {
 		output.value = "Puzzle has not been solved";
 	} else {
 		output.value = "Puzzle is impossible";
+	}
+	puzzle.UpdateImages();
+}
+
+function BranchSolvePuzzle(puzzle, depth) {
+	var solving = true;
+	while (solving && puzzle.possible) {
+		var preSolve = puzzle.CopyGrid();
+		SolvePuzzle(puzzle)
+		if (!puzzle.solved && puzzle.possible && depth != 0) {
+			var i = 0;
+			while (i < puzzle.grid.length && solving) {
+				var j = 0;
+				while (j < puzzle.grid[0].length && solving) {
+					if (puzzle.grid[i][j].connections < 2) {
+						var impossibleCount = 0;
+						if (puzzle.grid[i][j].blockup || puzzle.grid[i][j].up) {
+							impossibleCount += 1
+						} else {
+							var testPuzzle = new Puzzle(puzzle.CopyGrid());
+							testPuzzle.grid[i][j].MakeUp(testPuzzle.grid);
+							BranchSolvePuzzle(testPuzzle, depth - 1);
+							if (testPuzzle.solved) {
+								puzzle.CopyTiles(testPuzzle.grid);
+								solving = false;
+								puzzle.solved = true;
+								break;
+							} else if (!testPuzzle.possible) {
+								puzzle.grid[i][j].MakeBlockdown(puzzle.grid);
+								impossibleCount += 1;
+                            }
+						}
+						if (puzzle.grid[i][j].blockdown || puzzle.grid[i][j].down) {
+							impossibleCount += 1
+						} else {
+							var testPuzzle = new Puzzle(puzzle.CopyGrid());
+							testPuzzle.grid[i][j].MakeDown(testPuzzle.grid);
+							BranchSolvePuzzle(testPuzzle, depth - 1);
+							if (testPuzzle.solved) {
+								puzzle.CopyTiles(testPuzzle.grid);
+								solving = false;
+								puzzle.solved = true;
+								break;
+							} else if (!testPuzzle.possible) {
+								puzzle.grid[i][j].MakeBlockdown(puzzle.grid);
+								impossibleCount += 1;
+							}
+						}
+						if (puzzle.grid[i][j].blockleft || puzzle.grid[i][j].left) {
+							impossibleCount += 1
+						} else {
+							var testPuzzle = new Puzzle(puzzle.CopyGrid());
+							testPuzzle.grid[i][j].MakeLeft(testPuzzle.grid);
+							BranchSolvePuzzle(testPuzzle, depth - 1);
+							if (testPuzzle.solved) {
+								puzzle.CopyTiles(testPuzzle.grid);
+								solving = false;
+								puzzle.solved = true;
+								break;
+							} else if (!testPuzzle.possible) {
+								puzzle.grid[i][j].MakeBlockleft(puzzle.grid);
+								impossibleCount += 1;
+							}
+						}
+						if (puzzle.grid[i][j].blockright || puzzle.grid[i][j].riight) {
+							impossibleCount += 1
+						} else {
+							var testPuzzle = new Puzzle(puzzle.CopyGrid());
+							testPuzzle.grid[i][j].MakeRight(testPuzzle.grid);
+							BranchSolvePuzzle(testPuzzle, depth - 1);
+							if (testPuzzle.solved) {
+								puzzle.CopyTiles(testPuzzle.grid);
+								solving = false;
+								puzzle.solved = true;
+								break;
+							} else if (!testPuzzle.possible) {
+								puzzle.grid[i][j].MakeBlockright(puzzle.grid);
+								impossibleCount += 1;
+							}
+						}
+						if (impossibleCount == 4 && (puzzle.grid[i][j].connections > 0 || puzzle.grid[i][j].type != Type.none)) {
+							puzzle.possible = false;
+							solving = false;
+                        }
+					}
+					j++;
+				}
+				i++
+            }
+		}
+		if (puzzle.SameGrid(preSolve)) {
+			solving = false;
+			puzzle.solved = CheckSolved(puzzle.grid);
+        }
     }
 }
 
-function SolvePuzzle(puzzle, hasImages) {
+function SolvePuzzle(puzzle) {
 	var solving = true;
 	while (solving && puzzle.possible) {
 		var preSolve = puzzle.CopyGrid();
@@ -610,10 +737,7 @@ function SolvePuzzle(puzzle, hasImages) {
 			solving = false;
         }
 	}
-	if (hasImages) {
-		puzzle.UpdateImages();
-	}
-	puzzle.solved = (CheckSolved(puzzle.grid) ? true : false)
+	puzzle.solved = CheckSolved(puzzle.grid);
 }
 
 // #region SolveOpen
@@ -888,7 +1012,7 @@ function OCCompleteLoop(puzzle, y, x) {
 				if (puzzle.grid[y][x] === FindOtherSide(puzzle, connected)) {
 					var testPuzzle = new Puzzle(puzzle.CopyGrid());
 					testPuzzle.grid[y][x].MakeUp(testPuzzle.grid);
-					SolvePuzzle(testPuzzle, false);
+					SolvePuzzle(testPuzzle);
 					if (CheckSolved(testPuzzle.grid)) {
 						puzzle.grid[y][x].MakeUp(puzzle.grid);
 					} else {
@@ -905,7 +1029,7 @@ function OCCompleteLoop(puzzle, y, x) {
 				if (puzzle.grid[y][x] === FindOtherSide(puzzle, connected)) {
 					var testPuzzle = new Puzzle(puzzle.CopyGrid());
 					testPuzzle.grid[y][x].MakeDown(testPuzzle.grid);
-					SolvePuzzle(testPuzzle, false);
+					SolvePuzzle(testPuzzle);
 					if (CheckSolved(testPuzzle.grid)) {
 						puzzle.grid[y][x].MakeDown(puzzle.grid);
 					} else {
@@ -922,7 +1046,7 @@ function OCCompleteLoop(puzzle, y, x) {
 				if (puzzle.grid[y][x] === FindOtherSide(puzzle, connected)) {
 					var testPuzzle = new Puzzle(puzzle.CopyGrid());
 					testPuzzle.grid[y][x].MakeLeft(testPuzzle.grid);
-					SolvePuzzle(testPuzzle, false);
+					SolvePuzzle(testPuzzle);
 					if (CheckSolved(testPuzzle.grid)) {
 						puzzle.grid[y][x].MakeLeft(puzzle.grid);
 					} else {
@@ -939,7 +1063,7 @@ function OCCompleteLoop(puzzle, y, x) {
 				if (puzzle.grid[y][x] === FindOtherSide(puzzle, connected)) {
 					var testPuzzle = new Puzzle(puzzle.CopyGrid());
 					testPuzzle.grid[y][x].MakeRight(testPuzzle.grid);
-					SolvePuzzle(testPuzzle, false);
+					SolvePuzzle(testPuzzle);
 					if (CheckSolved(testPuzzle.grid)) {
 						puzzle.grid[y][x].MakeRight(puzzle.grid);
 					} else {
