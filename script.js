@@ -19,6 +19,27 @@ const p6 = new Grid([[0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 1, 0, 1], [0, 1, 
 const p7 = new Grid([[0, 0, 1, 0, 0, 0], [0, 0, 0, 0, 0, 2], [0, 1, 0, 1, 0, 0], [0, 0, 2, 0, 0, 0], [0, 1, 0, 0, 0, 1], [0, 0, 0, 1, 0, 0]]);
 const p8 = new Grid([[0, 0, 0, 0, 0],[0, 0, 0, 1, 0],[0, 0, 2, 0, 0],[1, 0, 1, 1, 0],[0, 0, 0, 0, 0]]);
 
+// #region collapsibles
+function ShowRules() {
+	var content = document.getElementById("rules");
+	document.getElementById("rulesBtn").classList.toggle("active");
+	if (content.style.maxHeight) {
+		content.style.maxHeight = null;
+	} else {
+		content.style.maxHeight = content.scrollHeight + "px";
+	}
+}
+
+function ShowExplanation() {
+	var content = document.getElementById("explanation");
+	document.getElementById("explanationBtn").classList.toggle("active");
+	if (content.style.maxHeight) {
+		content.style.maxHeight = null;
+	} else {
+		content.style.maxHeight = content.scrollHeight + "px";
+	}
+}
+// #endregion
 
 // #region tiles
 const Type = {
@@ -345,9 +366,9 @@ function Select(tile) {
 
 function CreateGrid(width, height) {
 	var emptyGridArray = []
-	for (var i = 0; i < Math.max(Math.min(height, 20), 1); i++) {
+	for (var i = 0; i < Math.max(Math.min(height, 20), 2); i++) {
 		var emptyCol = [];
-		for (var j = 0; j < Math.max(Math.min(width, 20), 1); j++) {
+		for (var j = 0; j < Math.max(Math.min(width, 20), 2); j++) {
 			emptyCol.push(Type.none);
 		}
 		emptyGridArray.push(emptyCol);

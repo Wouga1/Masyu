@@ -4,17 +4,62 @@
 	<meta charset="utf-8">
 	<link rel="stylesheet" href="styles.css">
 	<script src="script.js"></script>
-	<title>v1.5.1 Masyu</title>
+	<title>v1.6.0 Masyu</title>
 </head>
 
 <body onLoad="LoadGrid(p1)">
-	<b>GRID EDITING</b><br/>
-	Number of Rows: <input id="rows" type="number" value="6"> <br/>
-	Number of Columns: <input id="cols" type="number" value="6"> <br/>
-	<button onClick="CreateGrid(document.getElementById('cols').value, document.getElementById('rows').value)">Generate Grid</button> <br/>
-	Editing mode: <input id="edit" type="checkbox"> <br/><br/>
-	<b>LOAD GRID</b><br/>
-	<select id="puzzleSelect" onChange="LoadGrid(eval(value))">;
+	<button type="button" onClick="ShowRules()" class="collapsible" id="rulesBtn">Rules</button>
+	<div id="rules" class="content">
+		<p>There must be one single continuos loop.</p>
+		<img src="images/p1solved.png" width="200" height="200" />
+		<p>The loop must travel straight through open circles and must turn on <b>at least one</b> of the sides.</p>
+		<table class="rules">
+			<tr class="rules">
+				<th class="rules">Valid</th>
+				<th class="rules">Not Valid</th>
+				<th class="rules">Not Valid</th>
+			</tr>
+			<tr class="rules">
+				<th class="rules"><img src="images/ov.png" width="200" height="200" /></th>
+				<th class="rules"><img src="images/onv1.png" width="200" height="200" /></th>
+				<th class="rules"><img src="images/onv2.png" width="200" height="200" /></th>
+			</tr>
+		</table>
+		<p>The loop must turn on closed circles and must travel straight through the next cell on both sides.</p>
+		<table class="rules">
+			<tr class="rules">
+				<th class="rules">Valid</th>
+				<th class="rules">Not Valid</th>
+				<th class="rules">Not Valid</th>
+			</tr>
+			<tr class="rules">
+				<th class="rules"><img src="images/cv.png" width="200" height="200" /></th>
+				<th class="rules"><img src="images/cnv1.png" width="200" height="200" /></th>
+				<th class="rules"><img src="images/cnv2.png" width="200" height="200" /></th>
+			</tr>
+		</table>
+	</div> <br />
+	<button type="button" onClick="ShowExplanation()" class="collapsible" id="explanationBtn">Explanation</button>
+	<div id="explanation" class="content">
+		<h3>Drawing lines</h3>
+		<p>Click on a tile on the grid to select it. Click on a tile next to the tile that is selected to draw a line between the tiles.</p>
+		<h3>Editing Grid</h3>
+		<p>Enter a value into the rows and columns boxes then press the 'Generate Grid' button to make a grid of the specified size. The nnumber of rows and columns must be between 2 and 20.</p>
+		<p>Click on the 'Editing Mode' checkbox to enter editing mode. While in editing mode, you can click on tiles on the grid to toggle them between empty, open circles, and closed circles. Make sure to click the checkbox again if you wish to draw lines.</p>
+		<h3>Checking Puzzle</h3>
+		<p>Click the 'Check' button below the grid to check if the puzzle is solved. The response will appear in the output box below the button.</p>
+		<h3>Solving Puzzle</h3>
+		<p>Click the 'Solve' button below the grid to automatically solve the puzzle. It is possible that the program will not be able to solve the puzzle, either because the puzzle is impossible or because it is too hard for the program. If it can't solve it because it is impossible then it will say so it the output box. If it can't solve it because it is too hard it will do as much progress as it can and say that it is not solved in the output box. </p>
+		<p>If the program is not managing to solve the puzzle, you can increase the value in the 'Solving Depth' box to make it able to solve more difficult puzzles. However, the page <b>may freeze</b> if this number is set too high.</p>
+	</div> <br />
+
+	<b>GRID EDITING</b><br />
+	Number of Rows: <input id="rows" type="number" value="6"> <br />
+	Number of Columns: <input id="cols" type="number" value="6"> <br />
+	<button onClick="CreateGrid(document.getElementById('cols').value, document.getElementById('rows').value)">Generate Grid</button> <br />
+	Editing mode: <input id="edit" type="checkbox"> <br /><br />
+	<b>LOAD GRID</b><br />
+	<select id="puzzleSelect" onChange="LoadGrid(eval(value))">
 		<option value="p1">Puzzle 1</option>
 		<option value="p2">Puzzle 2</option>
 		<option value="p3">Puzzle 3</option>
@@ -23,13 +68,15 @@
 		<option value="p6">Puzzle 6</option>
 		<option value="p7">Puzzle 7</option>
 		<option value="p8">Puzzle 8</option>
-	</select><br/><br/>
-	<div id="grid"></div> <br/>
+	</select><br /><br />
+	<div id="grid"></div> <br />
 	<button onClick="btnCheckSolved()">Check</button>
-	<button onclick="btnSolvePuzzle()">Solve</button> 
-	Solving Depth: <input id="depth" type="number" value="1" /> <br/>
-	Output: <br/>
-	<textarea id="output" readonly cols="40" rows="3"></textarea> <br/>
-	<button onclick="document.getElementById('output').value = ''">Clear</button>
+	<button onclick="btnSolvePuzzle()">Solve</button>
+	Solving Depth: <input id="depth" type="number" value="1" /> <br />
+	Output: <br />
+	<textarea id="output" readonly cols="40" rows="3"></textarea> <br />
+	<button onclick="document.getElementById('output').value = ''">Clear</button><br /><br />
+
+
 </body>
 </html>
