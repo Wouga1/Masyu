@@ -343,11 +343,11 @@ function Select(tile) {
 		tile.image.src = DetermineImage(tile.up, tile.down, tile.left, tile.right, tile.type);
 	} else {
 		if (selected == tile) {
-			selected.image.style.border = '1px solid white';
+			selected.image.style.border = '1px solid #F0F0FF';
 			selected = null;
 		} else {
 			if (selected != null) {
-				selected.image.style.border = '1px solid white';
+				selected.image.style.border = '1px solid #F0F0FF';
 				if (tile.posX == selected.posX + 1 && tile.posY == selected.posY) {
 					selected.ChangeRight(tiles);
 				} else if (tile.posX == selected.posX - 1 && tile.posY == selected.posY) {
