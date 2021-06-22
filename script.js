@@ -766,9 +766,7 @@ function SolveOpen(puzzle, y, x) {
 	OpenOneWay(puzzle, y, x);
 	OpenBendSides(puzzle, y, x);
 	if (!(y == 0 || y == puzzle.grid.length - 1 || x == 0 || x == puzzle.grid[0].length - 1)) {
-		OpenThree(puzzle, y, x);
-		OpenStraight(puzzle, y, x);
-		OpenTwoStraight(puzzle, y, x);
+		OpenOppositeSides(puzzle, y, x);
     }
 }
 function OpenOneWay(puzzle, y, x) {
@@ -831,39 +829,13 @@ function OpenBendSides(puzzle, y, x) {
 	}
 }
 
-function OpenThree(puzzle, y, x) {
-	if (puzzle.grid[y - 1][x].type == Type.open && puzzle.grid[y + 1][x].type == Type.open) {
+function OpenOppositeSides(puzzle, y, x) {
+	if ((puzzle.grid[y - 1][x].type == Type.open || puzzle.grid[y - 1][x].up) && (puzzle.grid[y + 1][x].type == Type.open || puzzle.grid[y + 1][x].down)) {
 		if (!(puzzle.grid[y][x].MakeLeft(puzzle.grid) && puzzle.grid[y][x].MakeRight(puzzle.grid))) {
 			puzzle.possible = false;
-		}
+        }
 	}
-	if (puzzle.grid[y][x - 1].type == Type.open && puzzle.grid[y][x + 1].type == Type.open) {
-		if (!(puzzle.grid[y][x].MakeUp(puzzle.grid) && puzzle.grid[y][x].MakeDown(puzzle.grid))) {
-			puzzle.possible = false;
-		}
-	}
-}
-
-function OpenStraight(puzzle, y, x) {
-	if (puzzle.grid[y - 1][x].up && puzzle.grid[y + 1][x].down) {
-		if (!(puzzle.grid[y][x].MakeLeft(puzzle.grid) && puzzle.grid[y][x].MakeRight(puzzle.grid))) {
-			puzzle.possible = false;
-		}
-	}
-	if (puzzle.grid[y][x - 1].left && puzzle.grid[y][x + 1].right) {
-		if (!(puzzle.grid[y][x].MakeUp(puzzle.grid) && puzzle.grid[y][x].MakeDown(puzzle.grid))) {
-			puzzle.possible = false;
-		}
-	}
-}
-
-function OpenTwoStraight(puzzle, y, x) {
-	if ((puzzle.grid[y - 1][x].type == Type.open && puzzle.grid[y + 1][x].down) || (puzzle.grid[y + 1][x].type == Type.open && puzzle.grid[y - 1][x].up)) {
-		if (!(puzzle.grid[y][x].MakeLeft(puzzle.grid) && puzzle.grid[y][x].MakeRight(puzzle.grid))) {
-			puzzle.possible = false;
-		}
-	}
-	if ((puzzle.grid[y][x - 1].type == Type.open && puzzle.grid[y][x + 1].right) || (puzzle.grid[y][x + 1].type == Type.open && puzzle.grid[y][x - 1].left)) {
+	if ((puzzle.grid[y][x - 1].type == Type.open || puzzle.grid[y][x - 1].left) && (puzzle.grid[y][x + 1].type == Type.open || puzzle.grid[y][x + 1].right)) {
 		if (!(puzzle.grid[y][x].MakeUp(puzzle.grid) && puzzle.grid[y][x].MakeDown(puzzle.grid))) {
 			puzzle.possible = false;
 		}
